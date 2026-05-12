@@ -36,7 +36,9 @@
 
   <div class="preview">
     {#if selected}
-      <video src={selected.content_url} controls playsinline />
+      <video src={selected.content_url} controls playsinline>
+        <track kind="captions" />
+      </video>
     {:else}
       <div class="empty">
         <Film size={42} />
@@ -197,4 +199,3 @@
     }
   }
 </style>
-

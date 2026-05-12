@@ -64,7 +64,7 @@
       rows="2"
       disabled={!selectedVideo || busy}
       placeholder={selectedVideo ? 'Ask about the selected video...' : 'Select a video first'}
-    />
+    ></textarea>
     <button disabled={!selectedVideo || busy || !question.trim()} aria-label="Send question">
       {#if busy}
         <Loader2 size={18} class="icon-spin" />
@@ -249,4 +249,3 @@
     }
   }
 </style>
-

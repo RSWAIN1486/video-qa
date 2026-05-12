@@ -8,6 +8,7 @@
   import { modelStatus, modelStatusError, refreshModelStatus } from '$lib/stores/model';
   import { refreshVideos, selectedVideo, videoError, videos } from '$lib/stores/videos';
   import type { QaMessage, VideoRecord } from '$lib/types';
+  import { makeClientId } from '$lib/utils/id';
 
   let messages: QaMessage[] = [];
   let busy = false;
@@ -39,9 +40,9 @@
     const video = $selectedVideo;
     if (!video) return;
 
-    const userMessage: QaMessage = { id: crypto.randomUUID(), role: 'user', text: question };
+    const userMessage: QaMessage = { id: makeClientId('user'), role: 'user', text: question };
     const assistantMessage: QaMessage = {
-      id: crypto.randomUUID(),
+      id: makeClientId('assistant'),
       role: 'assistant',
       text: '',
       status: 'queued'
@@ -227,4 +228,3 @@
     }
   }
 </style>
-
