@@ -17,7 +17,7 @@ If the Mac cannot load the model comfortably, run the same repo on the GPU EC2 h
 
 ```bash
 ./scripts/setup_ec2_gpu.sh
-./scripts/run_api_ec2.sh
+./scripts/run_dev.sh
 ```
 
 Then forward ports from your Mac:
@@ -37,4 +37,3 @@ ssh -L 8000:127.0.0.1:8000 -L 5173:127.0.0.1:5173 ubuntu@YOUR_EC2_HOST
 
 - [Architecture](docs/architecture.md)
 - [Features](docs/features.md)
-
