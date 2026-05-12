@@ -1,0 +1,25 @@
+{
+  "name": "molmo2-video-qa-demo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@sveltejs/adapter-auto": "^3.3.1",
+    "@sveltejs/kit": "^2.15.2",
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "lucide-svelte": "^0.468.0",
+    "svelte": "^5.16.0",
+    "vite": "^6.0.5"
+  },
+  "devDependencies": {
+    "svelte-check": "^4.1.1",
+    "typescript": "^5.7.2"
+  }
+}
+
