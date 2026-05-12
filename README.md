@@ -13,7 +13,7 @@ The first version is built for screen-share demos: upload or select the included
 
 Open `http://127.0.0.1:5173`.
 
-Model artifacts are cached under `data/huggingface/` by default so the app never depends on a root-owned global Hugging Face cache.
+Model artifacts use Hugging Face's standard cache under `~/.cache/huggingface/` by default. Keep that directory owned by the user that runs the backend.
 
 If the Mac cannot load the model comfortably, run the same repo on the GPU EC2 host:
 

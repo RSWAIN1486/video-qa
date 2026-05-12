@@ -6,7 +6,7 @@ This demo is a local-first short-video QA app built around `allenai/Molmo2-8B`.
 
 - `web/` is a SvelteKit + TypeScript app. It owns video selection, upload flow, model status display, and chat-style streamed answers.
 - `server/` is a FastAPI app. It owns typed APIs, upload validation, video metadata extraction, SQLite state, and Molmo inference.
-- `data/` is runtime state. Uploaded videos live in `data/uploads/`; SQLite state lives in `data/db/`; model artifacts cache under `data/huggingface/`.
+- `data/` is runtime app state. Uploaded videos live in `data/uploads/`; SQLite state lives in `data/db/`. Model artifacts use Hugging Face's standard cache under `~/.cache/huggingface/` unless `HF_HOME` is overridden.
 
 ## Data Flow
 
