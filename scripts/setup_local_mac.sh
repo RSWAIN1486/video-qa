@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=env.sh
+source "$ROOT_DIR/scripts/env.sh"
 ENV_NAME="${VIDEO_QA_CONDA_ENV:-video-qa-molmo}"
 
 if ! command -v conda >/dev/null 2>&1; then
