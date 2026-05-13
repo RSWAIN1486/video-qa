@@ -13,7 +13,7 @@ The first version is built for screen-share demos: upload or select the included
 
 Open `http://127.0.0.1:5173`.
 
-Model artifacts use Hugging Face's standard cache under `~/.cache/huggingface/` by default. Keep that directory owned by the user that runs the backend.
+Model artifacts use Hugging Face's standard cache under `~/.cache/huggingface/` by default. The shared script setup creates that directory and fixes current-user read/write permissions before downloads or inference.
 
 If the Mac cannot load the model comfortably, run the same repo on the GPU EC2 host:
 
@@ -23,6 +23,12 @@ If the Mac cannot load the model comfortably, run the same repo on the GPU EC2 h
 ```
 
 The EC2 setup script installs Miniconda under `~/miniconda3` when `conda` is not already available, sources `~/.bashrc`, and accepts the standard Anaconda package-channel Terms of Service before creating the environment.
+
+To download Molmo2-8B once before the first UI query:
+
+```bash
+./scripts/download_molmo2_model.sh
+```
 
 Then forward ports from your Mac:
 
