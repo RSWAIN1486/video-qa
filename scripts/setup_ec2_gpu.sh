@@ -68,7 +68,17 @@ install_miniconda() {
 
   export PATH="$MINICONDA_HOME/bin:$PATH"
   "$MINICONDA_HOME/bin/conda" init bash >/dev/null 2>&1 || true
+  if [ -f "$HOME/.bashrc" ]; then
+    # shellcheck source=/dev/null
+    source "$HOME/.bashrc" || true
+  fi
   log "Conda version: $("$MINICONDA_HOME/bin/conda" --version)"
+}
+
+accept_conda_tos() {
+  log "Accepting Anaconda Terms of Service where supported"
+  conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main || true
+  conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r || true
 }
 
 if ! command -v nvidia-smi >/dev/null 2>&1; then
@@ -86,6 +96,8 @@ if ! command -v conda >/dev/null 2>&1; then
   echo "conda is required but was not found after Miniconda setup."
   exit 1
 fi
+
+accept_conda_tos
 
 if ! conda env list | awk '{print $1}' | grep -qx "$ENV_NAME"; then
   conda create -y -n "$ENV_NAME" python=3.11
