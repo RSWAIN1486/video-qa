@@ -30,6 +30,20 @@ Then forward ports from your Mac:
 ssh -L 8000:127.0.0.1:8000 -L 5173:127.0.0.1:5173 ubuntu@YOUR_EC2_HOST
 ```
 
+### EC2 Separate Server Commands
+
+Backend:
+
+```bash
+cd ~/video-qa && eval "$(conda shell.bash hook)" && conda activate video-qa-molmo && cd server && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+Frontend:
+
+```bash
+cd ~/video-qa/web && source ~/.nvm/nvm.sh && nvm use && npm run dev -- --host 0.0.0.0
+```
+
 ## What Is Included
 
 - Polished video QA WebUI with upload, preview, sample prompts, model status, and answer history.
