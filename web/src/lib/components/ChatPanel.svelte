@@ -1,12 +1,13 @@
 <script lang="ts">
-  import { Clock, Loader2, Send, Sparkles } from 'lucide-svelte';
-  import type { QaMessage, VideoRecord } from '$lib/types';
+  import { Crosshair, Clock, Loader2, Send, Sparkles } from 'lucide-svelte';
+  import type { QaMessage, VideoPoint, VideoRecord } from '$lib/types';
 
   export let selectedVideo: VideoRecord | null = null;
   export let messages: QaMessage[] = [];
   export let busy = false;
   export let statusText = '';
   export let onAsk: (question: string) => Promise<void>;
+  export let onPointSelect: (point: VideoPoint) => void;
 
   let question = '';
   const samples = ['what do you see in the video', 'when did the woman in red turn backward'];
@@ -52,6 +53,12 @@
           <p>{message.text}</p>
           {#if message.latency_ms}
             <span><Clock size={13} /> {(message.latency_ms / 1000).toFixed(1)}s</span>
+          {/if}
+          {#if message.points?.length}
+            <button class="point-button" on:click={() => message.points?.[0] && onPointSelect(message.points[0])}>
+              <Crosshair size={14} />
+              <span>Show point at {message.points[0].time_sec.toFixed(1)}s</span>
+            </button>
           {/if}
         </div>
       </article>
@@ -207,6 +214,25 @@
     margin-top: 8px;
     color: #95a39b;
     font-size: 12px;
+  }
+
+  .point-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    border: 1px solid rgba(132, 204, 163, 0.28);
+    border-radius: 8px;
+    padding: 6px 9px;
+    background: rgba(35, 68, 51, 0.55);
+    color: #d9fbe6;
+    font-size: 13px;
+  }
+
+  .point-button span {
+    margin: 0;
+    color: inherit;
+    font-size: inherit;
   }
 
   form {

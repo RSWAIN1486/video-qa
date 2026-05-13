@@ -1,14 +1,20 @@
 from __future__ import annotations
 
 import logging
+import re
 import time
 from pathlib import Path
 from typing import Optional, Protocol
 
 from app.config import MODEL_ID
-from app.schemas import ModelStatus, VideoAnswer
+from app.schemas import ModelStatus, VideoAnswer, VideoPoint
+from app.services.video_metadata import extract_video_metadata
 
 logger = logging.getLogger("uvicorn.error")
+COORD_REGEX = re.compile(r"<(?:points|tracks).*? coords=\"([0-9\t:;, .]+)\"/?>")
+POINTING_TAG_REGEX = re.compile(r"\s*</?(?:points|tracks)(?:\s+[^>]*)?>\s*")
+FRAME_REGEX = re.compile(r"(?:^|\t|:|,|;)([0-9.]+) ([0-9. ]+)")
+POINTS_REGEX = re.compile(r"([0-9]+) ([0-9]{3,4}) ([0-9]{3,4})")
 
 
 class VideoAnalyzer(Protocol):
@@ -149,13 +155,22 @@ class MolmoVideoEngine:
 
         prompt_len = inputs["input_ids"].size(1)
         generated_tokens = generated_ids[0, prompt_len:]
-        answer = self.processor.tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
+        generated_text = self.processor.tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
+        metadata = extract_video_metadata(video_path)
+        points = extract_video_points(generated_text, metadata.width, metadata.height)
+        answer = clean_pointing_markup(generated_text)
         latency_ms = int((time.perf_counter() - started) * 1000)
-        logger.info("molmo.answer.complete latency_ms=%s answer=%r", latency_ms, answer[:1000])
+        logger.info(
+            "molmo.answer.complete latency_ms=%s points=%s answer=%r",
+            latency_ms,
+            len(points),
+            answer[:1000],
+        )
         return VideoAnswer(
             answer=answer,
             model_id=self.model_id,
             latency_ms=latency_ms,
+            points=points,
             device=self.device,
             dtype=self.dtype,
         )
@@ -197,3 +212,29 @@ class MolmoVideoEngine:
             return next(self.model.parameters()).device
         except Exception:
             return getattr(self.model, "device", "cpu")
+
+
+def _points_from_num_str(text: str, image_w: int, image_h: int):
+    for points in POINTS_REGEX.finditer(text):
+        label_id, x_text, y_text = points.group(1), points.group(2), points.group(3)
+        x = float(x_text) / 1000 * image_w
+        y = float(y_text) / 1000 * image_h
+        if 0 <= x <= image_w and 0 <= y <= image_h:
+            yield label_id, x, y
+
+
+def extract_video_points(text: str, image_w: int, image_h: int) -> list[VideoPoint]:
+    parsed: list[VideoPoint] = []
+    for coord in COORD_REGEX.finditer(text):
+        for point_group in FRAME_REGEX.finditer(coord.group(1)):
+            time_sec = float(point_group.group(1))
+            for label_id, x, y in _points_from_num_str(point_group.group(2), image_w, image_h):
+                parsed.append(VideoPoint(time_sec=time_sec, x=x, y=y, label_id=label_id))
+    return parsed
+
+
+def clean_pointing_markup(text: str) -> str:
+    cleaned = POINTING_TAG_REGEX.sub(" ", text)
+    cleaned = re.sub(r"\s+([,.;:!?])", r"\1", cleaned)
+    cleaned = re.sub(r"\s{2,}", " ", cleaned)
+    return cleaned.strip()

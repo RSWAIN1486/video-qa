@@ -6,6 +6,7 @@
 - Show visible uploading and loaded states for the selected video.
 - Preview the selected video directly in the browser.
 - Ask natural-language questions in a chat-style interface.
+- Parse model pointing outputs, hide raw coordinate tags from answers, and show a marker on the video when a point is returned.
 - Use sample prompts for a quick client-ready flow:
   - `what do you see in the video`
   - `when did the woman in red turn backward`

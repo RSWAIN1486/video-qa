@@ -15,7 +15,7 @@ This demo is a local-first short-video QA app built around `allenai/Molmo2-8B`.
 3. The QA route records a run in SQLite, emits SSE status events, serializes inference behind a single lock, and writes the final answer or error.
 4. `MolmoVideoEngine` lazy-loads `allenai/Molmo2-8B` through Transformers with `trust_remote_code=True`, `dtype="auto"`, and `device_map="auto"`.
 
-The backend also logs each QA milestone to the Uvicorn terminal: run queued, model loading, video preprocessing, generation start/finish, final latency, answer preview, and exceptions.
+The backend also logs each QA milestone to the Uvicorn terminal: run queued, model loading, video preprocessing, generation start/finish, final latency, answer preview, parsed pointing count, and exceptions. If the model emits `<points>` or `<tracks>` tags, the backend strips those tags from the answer and returns structured `{time_sec, x, y}` points for the WebUI overlay.
 
 ## Storage
 

@@ -96,6 +96,7 @@ async def stream_qa(request: Request, payload: QaRequest) -> StreamingResponse:
                         "answer": finished["answer"],
                         "latency_ms": finished["latency_ms"],
                         "model_id": result.model_id,
+                        "points": [point.model_dump() for point in result.points],
                         "device": result.device,
                         "dtype": result.dtype,
                     },

@@ -13,7 +13,7 @@
     warmLoadModel
   } from '$lib/stores/model';
   import { refreshVideos, selectedVideo, videoError, videos } from '$lib/stores/videos';
-  import type { QaMessage, VideoRecord } from '$lib/types';
+  import type { QaMessage, VideoPoint, VideoRecord } from '$lib/types';
   import { makeClientId } from '$lib/utils/id';
 
   let messages: QaMessage[] = [];
@@ -21,6 +21,7 @@
   let statusText = '';
   let uploading = false;
   let uploadStatus: string | null = null;
+  let highlightPoint: VideoPoint | null = null;
 
   onMount(async () => {
     await Promise.all([refreshModelStatus(), refreshVideos()]);
@@ -28,6 +29,11 @@
 
   function selectVideo(video: VideoRecord) {
     selectedVideo.set(video);
+    highlightPoint = null;
+  }
+
+  function showPoint(point: VideoPoint) {
+    highlightPoint = point;
   }
 
   async function handleUpload(file: File) {
@@ -80,9 +86,18 @@
           onFinal: (data) => {
             messages = messages.map((message) =>
               message.id === assistantMessage.id
-                ? { ...message, text: data.answer, latency_ms: data.latency_ms, status: 'complete' }
+                ? {
+                    ...message,
+                    text: data.answer,
+                    latency_ms: data.latency_ms,
+                    points: data.points ?? [],
+                    status: 'complete'
+                  }
                 : message
             );
+            if (data.points?.length) {
+              highlightPoint = data.points[0];
+            }
           },
           onError: (data) => {
             messages = messages.map((message) =>
@@ -146,6 +161,7 @@
       uploading={uploading}
       error={$videoError}
       uploadStatus={uploadStatus}
+      highlightPoint={highlightPoint}
       onSelect={selectVideo}
       onUpload={handleUpload}
     />
@@ -155,6 +171,7 @@
       {busy}
       {statusText}
       onAsk={ask}
+      onPointSelect={showPoint}
     />
   </div>
 </main>

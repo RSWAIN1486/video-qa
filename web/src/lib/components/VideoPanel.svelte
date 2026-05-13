@@ -1,14 +1,20 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { CheckCircle2, Film, Loader2, Upload } from 'lucide-svelte';
-  import type { VideoRecord } from '$lib/types';
+  import type { VideoPoint, VideoRecord } from '$lib/types';
 
   export let videos: VideoRecord[] = [];
   export let selected: VideoRecord | null = null;
   export let uploading = false;
   export let error: string | null = null;
   export let uploadStatus: string | null = null;
+  export let highlightPoint: VideoPoint | null = null;
   export let onSelect: (video: VideoRecord) => void;
   export let onUpload: (file: File) => Promise<void>;
+
+  let videoEl: HTMLVideoElement | null = null;
+  let previewEl: HTMLDivElement | null = null;
+  let lastPointKey = '';
 
   async function handleFile(event: Event) {
     const input = event.currentTarget as HTMLInputElement;
@@ -20,6 +26,47 @@
 
   const formatSeconds = (value: number) => `${value.toFixed(1)}s`;
   const formatSize = (value: number) => `${(value / 1024 / 1024).toFixed(1)} MB`;
+
+  $: if (highlightPoint && selected && videoEl) {
+    const pointKey = `${selected.id}:${highlightPoint.time_sec}:${highlightPoint.x}:${highlightPoint.y}`;
+    if (pointKey !== lastPointKey) {
+      lastPointKey = pointKey;
+      seekToPoint(highlightPoint);
+    }
+  }
+
+  async function seekToPoint(point: VideoPoint) {
+    await tick();
+    if (!videoEl || !selected) return;
+    videoEl.currentTime = Math.max(0, Math.min(point.time_sec, selected.duration_sec));
+    videoEl.pause();
+  }
+
+  function pointStyle(point: VideoPoint): string {
+    if (!selected || !previewEl) return '';
+    const boxW = previewEl.clientWidth || selected.width;
+    const boxH = previewEl.clientHeight || selected.height;
+    const videoAspect = selected.width / selected.height;
+    const boxAspect = boxW / boxH;
+    let renderedW = boxW;
+    let renderedH = boxH;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (boxAspect > videoAspect) {
+      renderedH = boxH;
+      renderedW = renderedH * videoAspect;
+      offsetX = (boxW - renderedW) / 2;
+    } else {
+      renderedW = boxW;
+      renderedH = renderedW / videoAspect;
+      offsetY = (boxH - renderedH) / 2;
+    }
+
+    const x = offsetX + (point.x / selected.width) * renderedW;
+    const y = offsetY + (point.y / selected.height) * renderedH;
+    return `left:${x}px;top:${y}px;`;
+  }
 </script>
 
 <section class="panel">
@@ -45,11 +92,16 @@
     </label>
   </div>
 
-  <div class="preview">
+  <div class="preview" bind:this={previewEl}>
     {#if selected}
-      <video src={selected.content_url} controls playsinline>
+      <video bind:this={videoEl} src={selected.content_url} controls playsinline>
         <track kind="captions" />
       </video>
+      {#if highlightPoint}
+        <div class="point-marker" style={pointStyle(highlightPoint)} aria-label="Object point">
+          <span></span>
+        </div>
+      {/if}
     {:else}
       <div class="empty">
         <Film size={42} />
@@ -154,6 +206,7 @@
   }
 
   .preview {
+    position: relative;
     display: grid;
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -162,6 +215,29 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     background: #070908;
+  }
+
+  .point-marker {
+    position: absolute;
+    z-index: 2;
+    width: 30px;
+    height: 30px;
+    transform: translate(-50%, -50%);
+    border: 2px solid #ff4fa3;
+    border-radius: 50%;
+    box-shadow: 0 0 0 6px rgba(255, 79, 163, 0.2), 0 0 24px rgba(255, 79, 163, 0.62);
+    pointer-events: none;
+  }
+
+  .point-marker span {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: #ff4fa3;
   }
 
   video {

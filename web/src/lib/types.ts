@@ -20,12 +20,20 @@ export type VideoRecord = {
   content_url: string;
 };
 
+export type VideoPoint = {
+  time_sec: number;
+  x: number;
+  y: number;
+  label_id?: string | null;
+};
+
 export type QaMessage = {
   id: string;
   role: 'user' | 'assistant' | 'system';
   text: string;
   status?: string;
   latency_ms?: number;
+  points?: VideoPoint[];
 };
 
 export type QaRequest = {
@@ -38,7 +46,6 @@ export type QaRequest = {
 export type StreamHandlers = {
   onStatus?: (data: { status: string; run_id?: string }) => void;
   onToken?: (data: { text: string; run_id?: string }) => void;
-  onFinal?: (data: { answer: string; latency_ms: number; run_id?: string }) => void;
+  onFinal?: (data: { answer: string; latency_ms: number; points?: VideoPoint[]; run_id?: string }) => void;
   onError?: (data: { message: string; code?: string; run_id?: string }) => void;
 };
-

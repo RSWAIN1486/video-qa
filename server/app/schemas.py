@@ -52,10 +52,17 @@ class QaRunRecord(BaseModel):
     created_at: str
 
 
+class VideoPoint(BaseModel):
+    time_sec: float
+    x: float
+    y: float
+    label_id: Optional[str] = None
+
+
 class VideoAnswer(BaseModel):
     answer: str
     model_id: str
     latency_ms: int
+    points: list[VideoPoint] = Field(default_factory=list)
     device: Optional[str] = None
     dtype: Optional[str] = None
-
