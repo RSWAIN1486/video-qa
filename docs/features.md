@@ -3,6 +3,7 @@
 ## V1 Demo
 
 - Select the included `test1.mp4` sample or upload a short MP4, MOV, or WebM clip.
+- Show visible uploading and loaded states for the selected video.
 - Preview the selected video directly in the browser.
 - Ask natural-language questions in a chat-style interface.
 - Use sample prompts for a quick client-ready flow:
@@ -10,6 +11,7 @@
   - `when did the woman in red turn backward`
 - Stream run status and final answers with Server-Sent Events.
 - Show model status, cold-start state, device, and errors.
+- Warm-load Molmo2-8B from the header before asking the first question.
 - Log QA progress in the backend terminal, including model load, video preprocessing, generation, final latency, and answer preview.
 - Persist video metadata and QA history in SQLite.
 

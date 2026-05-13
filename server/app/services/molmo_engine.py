@@ -15,6 +15,9 @@ class VideoAnalyzer(Protocol):
     def status(self) -> ModelStatus:
         ...
 
+    def load(self) -> ModelStatus:
+        ...
+
     def answer_video(
         self,
         *,
@@ -48,6 +51,10 @@ class MolmoVideoEngine:
             last_error=self.last_error,
             cold_start_required=self.model is None or self.processor is None,
         )
+
+    def load(self) -> ModelStatus:
+        self._load()
+        return self.status()
 
     def _load(self) -> None:
         if self.model is not None and self.processor is not None:

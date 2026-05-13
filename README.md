@@ -18,6 +18,7 @@ Model artifacts use Hugging Face's standard cache under `~/.cache/huggingface/` 
 If the Mac cannot load the model comfortably, run the same repo on the GPU EC2 host:
 
 ```bash
+./scripts/env.sh
 ./scripts/setup_ec2_gpu.sh
 ./scripts/run_dev.sh
 ```

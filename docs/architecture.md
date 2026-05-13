@@ -11,7 +11,7 @@ This demo is a local-first short-video QA app built around `allenai/Molmo2-8B`.
 ## Data Flow
 
 1. The backend registers `test1.mp4` as a sample video at startup when the file is present.
-2. The frontend calls `/api/videos`, previews a local `/api/videos/{id}/content` stream, and sends questions to `/api/qa/stream`.
+2. The frontend calls `/api/videos`, previews a local `/api/videos/{id}/content` stream, can warm-load the model via `/api/model/load`, and sends questions to `/api/qa/stream`.
 3. The QA route records a run in SQLite, emits SSE status events, serializes inference behind a single lock, and writes the final answer or error.
 4. `MolmoVideoEngine` lazy-loads `allenai/Molmo2-8B` through Transformers with `trust_remote_code=True`, `dtype="auto"`, and `device_map="auto"`.
 

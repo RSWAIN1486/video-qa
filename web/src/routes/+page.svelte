@@ -1,11 +1,17 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { RefreshCcw, ShieldCheck } from 'lucide-svelte';
+  import { RefreshCcw, ShieldCheck, Zap } from 'lucide-svelte';
   import ChatPanel from '$lib/components/ChatPanel.svelte';
   import StatusBadge from '$lib/components/StatusBadge.svelte';
   import VideoPanel from '$lib/components/VideoPanel.svelte';
   import { streamQa, uploadVideo } from '$lib/services/api';
-  import { modelStatus, modelStatusError, refreshModelStatus } from '$lib/stores/model';
+  import {
+    modelLoading,
+    modelStatus,
+    modelStatusError,
+    refreshModelStatus,
+    warmLoadModel
+  } from '$lib/stores/model';
   import { refreshVideos, selectedVideo, videoError, videos } from '$lib/stores/videos';
   import type { QaMessage, VideoRecord } from '$lib/types';
   import { makeClientId } from '$lib/utils/id';
@@ -14,6 +20,7 @@
   let busy = false;
   let statusText = '';
   let uploading = false;
+  let uploadStatus: string | null = null;
 
   onMount(async () => {
     await Promise.all([refreshModelStatus(), refreshVideos()]);
@@ -25,12 +32,16 @@
 
   async function handleUpload(file: File) {
     uploading = true;
+    uploadStatus = `Uploading ${file.name}...`;
+    videoError.set(null);
     try {
       const record = await uploadVideo(file);
       await refreshVideos();
       selectedVideo.set(record);
+      uploadStatus = `Uploaded ${record.filename}. You can ask a question now.`;
     } catch (error) {
       videoError.set(error instanceof Error ? error.message : 'Upload failed.');
+      uploadStatus = null;
     } finally {
       uploading = false;
     }
@@ -108,7 +119,16 @@
     </div>
     <div class="header-actions">
       <StatusBadge status={$modelStatus} error={$modelStatusError} />
-      <button class="icon-button" on:click={refreshModelStatus} aria-label="Refresh model status">
+      <button
+        class="load-button"
+        disabled={$modelLoading || $modelStatus?.loaded}
+        on:click={warmLoadModel}
+        aria-label="Load model into memory"
+      >
+        <Zap size={17} />
+        <span>{$modelLoading ? 'Loading' : $modelStatus?.loaded ? 'Loaded' : 'Load model'}</span>
+      </button>
+      <button class="icon-button" on:click={refreshModelStatus} aria-label="Refresh model status" title="Refresh model status">
         <RefreshCcw size={18} />
       </button>
     </div>
@@ -125,6 +145,7 @@
       selected={$selectedVideo}
       uploading={uploading}
       error={$videoError}
+      uploadStatus={uploadStatus}
       onSelect={selectVideo}
       onUpload={handleUpload}
     />
@@ -184,6 +205,20 @@
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.04);
     color: #dce8e1;
+  }
+
+  .load-button {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(132, 204, 163, 0.32);
+    border-radius: 8px;
+    padding: 7px 11px;
+    background: #24533a;
+    color: #edfff3;
+    font-weight: 700;
+    white-space: nowrap;
   }
 
   .privacy-strip {

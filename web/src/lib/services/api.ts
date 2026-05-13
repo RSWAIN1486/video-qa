@@ -12,6 +12,14 @@ export async function getModelStatus(): Promise<ModelStatus> {
   return readJson<ModelStatus>(await fetch('/api/model/status'));
 }
 
+export async function loadModel(): Promise<ModelStatus> {
+  return readJson<ModelStatus>(
+    await fetch('/api/model/load', {
+      method: 'POST'
+    })
+  );
+}
+
 export async function listVideos(): Promise<VideoRecord[]> {
   return readJson<VideoRecord[]>(await fetch('/api/videos'));
 }
@@ -69,4 +77,3 @@ function dispatchEventText(eventText: string, handlers: StreamHandlers): void {
   if (event === 'final') handlers.onFinal?.(data);
   if (event === 'error') handlers.onError?.(data);
 }
-

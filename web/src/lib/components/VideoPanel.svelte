@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { Film, Upload } from 'lucide-svelte';
+  import { CheckCircle2, Film, Loader2, Upload } from 'lucide-svelte';
   import type { VideoRecord } from '$lib/types';
 
   export let videos: VideoRecord[] = [];
   export let selected: VideoRecord | null = null;
   export let uploading = false;
   export let error: string | null = null;
+  export let uploadStatus: string | null = null;
   export let onSelect: (video: VideoRecord) => void;
   export let onUpload: (file: File) => Promise<void>;
 
@@ -27,8 +28,18 @@
       <p>Video</p>
       <h2>{selected?.filename ?? 'Select a video'}</h2>
     </div>
+    {#if selected}
+      <div class="loaded-badge">
+        <CheckCircle2 size={16} />
+        <span>Video loaded</span>
+      </div>
+    {/if}
     <label class="upload-button" aria-label="Upload video">
-      <Upload size={17} />
+      {#if uploading}
+        <Loader2 size={17} class="icon-spin" />
+      {:else}
+        <Upload size={17} />
+      {/if}
       <span>{uploading ? 'Uploading' : 'Upload'}</span>
       <input disabled={uploading} type="file" accept="video/mp4,video/quicktime,video/webm" on:change={handleFile} />
     </label>
@@ -48,6 +59,7 @@
 
   {#if selected}
     <div class="meta">
+      <span class="ready-chip"><CheckCircle2 size={13} /> Loaded</span>
       <span>{selected.width}x{selected.height}</span>
       <span>{formatSeconds(selected.duration_sec)}</span>
       <span>{formatSize(selected.size_bytes)}</span>
@@ -57,15 +69,24 @@
 
   {#if error}
     <p class="error">{error}</p>
+  {:else if uploadStatus}
+    <p class="status">{uploadStatus}</p>
   {/if}
 
   <div class="video-list">
-    {#each videos as video}
-      <button class:active={selected?.id === video.id} on:click={() => onSelect(video)}>
-        <Film size={15} />
-        <span>{video.filename}</span>
-      </button>
-    {/each}
+    {#if videos.length === 0}
+      <div class="empty-list">No videos loaded yet. Upload a short clip to enable questions.</div>
+    {:else}
+      {#each videos as video}
+        <button class:active={selected?.id === video.id} on:click={() => onSelect(video)}>
+          <Film size={15} />
+          <span>{video.filename}</span>
+          {#if selected?.id === video.id}
+            <CheckCircle2 size={15} />
+          {/if}
+        </button>
+      {/each}
+    {/if}
   </div>
 </section>
 
@@ -84,6 +105,20 @@
     justify-content: space-between;
     gap: 14px;
     margin-bottom: 14px;
+  }
+
+  .loaded-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid rgba(132, 204, 163, 0.28);
+    border-radius: 8px;
+    padding: 7px 10px;
+    background: rgba(35, 68, 51, 0.5);
+    color: #c8f8dc;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
   }
 
   p {
@@ -147,11 +182,20 @@
   }
 
   .meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 6px;
     padding: 4px 8px;
     color: #b7c4bd;
     font-size: 12px;
+  }
+
+  .meta .ready-chip {
+    border-color: rgba(132, 204, 163, 0.35);
+    background: rgba(35, 68, 51, 0.42);
+    color: #c8f8dc;
   }
 
   .video-list {
@@ -174,6 +218,7 @@
   }
 
   .video-list button span {
+    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -190,6 +235,22 @@
     color: #fecaca;
     font-size: 13px;
     text-transform: none;
+  }
+
+  .status {
+    margin-top: 12px;
+    color: #c8f8dc;
+    font-size: 13px;
+    text-transform: none;
+  }
+
+  .empty-list {
+    border: 1px dashed rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    padding: 12px;
+    color: #95a39b;
+    font-size: 13px;
+    line-height: 1.4;
   }
 
   @media (max-width: 720px) {
