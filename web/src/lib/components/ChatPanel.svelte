@@ -22,7 +22,7 @@
 <section class="panel">
   <div class="panel-heading">
     <div>
-      <p>Ask Molmo2</p>
+      <p>Ask about the video</p>
       <h2>Video QA</h2>
     </div>
     {#if busy}

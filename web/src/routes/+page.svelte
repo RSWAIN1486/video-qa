@@ -114,7 +114,7 @@
 <main class="shell">
   <header>
     <div>
-      <p>Molmo2-8B</p>
+      <p>Local video intelligence</p>
       <h1>Video QA Demo</h1>
     </div>
     <div class="header-actions">

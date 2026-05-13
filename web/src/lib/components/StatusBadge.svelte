@@ -12,13 +12,13 @@
     <span>{error ?? status?.last_error}</span>
   {:else if status?.loading}
     <Loader2 size={16} class="icon-spin" />
-    <span>Loading {status.model_id}</span>
+    <span>Loading</span>
   {:else if status?.loaded}
     <CheckCircle2 size={16} />
-    <span>{status.model_id} ready</span>
+    <span>Ready</span>
   {:else}
     <Server size={16} />
-    <span>{status?.model_id ?? 'Molmo2-8B'} cold start</span>
+    <span>Cold start</span>
   {/if}
 </div>
 
@@ -44,4 +44,3 @@
     color: #fecaca;
   }
 </style>
-
