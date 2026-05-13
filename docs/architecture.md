@@ -28,7 +28,7 @@ The app does not upload videos to external services. The only expected network t
 
 ## Deployment Shape
 
-Mac is a best-effort local runtime. For reliable native video QA, the same repo can run on a private EC2 GPU host. The EC2 setup script creates the Conda environment, installs Python dependencies, installs Node through nvm using `web/.nvmrc`, and installs frontend dependencies. The planned client demo is screen-share based, so the EC2 app should bind to `127.0.0.1` and be accessed with SSH port forwarding rather than a public URL.
+Mac is a best-effort local runtime. For reliable native video QA, the same repo can run on a private EC2 GPU host. The EC2 setup script installs Miniconda when needed, creates the Conda environment, installs Python dependencies, installs Node through nvm using `web/.nvmrc`, and installs frontend dependencies. The planned client demo is screen-share based, so the EC2 app should bind to `127.0.0.1` and be accessed with SSH port forwarding rather than a public URL.
 
 ## Next Architecture Step
 

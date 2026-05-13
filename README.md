@@ -22,6 +22,8 @@ If the Mac cannot load the model comfortably, run the same repo on the GPU EC2 h
 ./scripts/run_dev.sh
 ```
 
+The EC2 setup script installs Miniconda under `~/miniconda3` when `conda` is not already available.
+
 Then forward ports from your Mac:
 
 ```bash
