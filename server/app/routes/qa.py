@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from pathlib import Path
 from typing import Any, AsyncIterator
 
@@ -12,6 +13,7 @@ from app.config import DEFAULT_MAX_FPS, DEFAULT_MAX_NEW_TOKENS
 from app.schemas import QaRequest
 
 router = APIRouter()
+logger = logging.getLogger("uvicorn.error")
 
 
 def _sse(event: str, data: dict[str, Any]) -> str:
@@ -37,6 +39,16 @@ async def stream_qa(request: Request, payload: QaRequest) -> StreamingResponse:
         max_fps=max_fps,
         max_new_tokens=max_new_tokens,
     )
+    logger.info(
+        "qa.run.queued run_id=%s video_id=%s filename=%s duration=%.2fs max_fps=%s max_new_tokens=%s question=%r",
+        run["id"],
+        payload.video_id,
+        video["filename"],
+        video["duration_sec"],
+        max_fps,
+        max_new_tokens,
+        payload.question.strip(),
+    )
 
     async def events() -> AsyncIterator[str]:
         yield _sse("status", {"run_id": run["id"], "status": "queued"})
@@ -44,11 +56,14 @@ async def stream_qa(request: Request, payload: QaRequest) -> StreamingResponse:
             async with request.app.state.inference_lock:
                 if request.app.state.analyzer.status().cold_start_required:
                     request.app.state.db.update_run_status(run["id"], "loading_model")
+                    logger.info("qa.run.loading_model run_id=%s model_id=%s", run["id"], request.app.state.analyzer.status().model_id)
                     yield _sse("status", {"run_id": run["id"], "status": "loading_model"})
 
                 request.app.state.db.update_run_status(run["id"], "preprocessing_video")
+                logger.info("qa.run.preprocessing_video run_id=%s path=%s", run["id"], video_path)
                 yield _sse("status", {"run_id": run["id"], "status": "preprocessing_video"})
                 request.app.state.db.update_run_status(run["id"], "generating")
+                logger.info("qa.run.generating run_id=%s", run["id"])
                 yield _sse("status", {"run_id": run["id"], "status": "generating"})
 
                 result = await asyncio.to_thread(
@@ -66,6 +81,14 @@ async def stream_qa(request: Request, payload: QaRequest) -> StreamingResponse:
                     answer=result.answer,
                     latency_ms=result.latency_ms,
                 )
+                logger.info(
+                    "qa.run.complete run_id=%s latency_ms=%s device=%s dtype=%s answer=%r",
+                    run["id"],
+                    finished["latency_ms"],
+                    result.device,
+                    result.dtype,
+                    result.answer[:1000],
+                )
                 yield _sse(
                     "final",
                     {
@@ -81,6 +104,7 @@ async def stream_qa(request: Request, payload: QaRequest) -> StreamingResponse:
         except Exception as exc:
             message = str(exc) or "Video QA failed."
             request.app.state.db.fail_run(run["id"], error_message=message)
+            logger.exception("qa.run.error run_id=%s message=%s", run["id"], message)
             yield _sse(
                 "error",
                 {
@@ -91,4 +115,3 @@ async def stream_qa(request: Request, payload: QaRequest) -> StreamingResponse:
             )
 
     return StreamingResponse(events(), media_type="text/event-stream")
-

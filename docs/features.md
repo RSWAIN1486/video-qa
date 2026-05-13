@@ -10,6 +10,7 @@
   - `when did the woman in red turn backward`
 - Stream run status and final answers with Server-Sent Events.
 - Show model status, cold-start state, device, and errors.
+- Log QA progress in the backend terminal, including model load, video preprocessing, generation, final latency, and answer preview.
 - Persist video metadata and QA history in SQLite.
 
 ## Model Runtime
@@ -28,4 +29,3 @@
 ## Planned Next Step
 
 Long-video support will add chunking, per-chunk summaries, and retrieval over temporal segments while preserving the same upload and QA surface.
-

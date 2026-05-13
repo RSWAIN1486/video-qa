@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 import time
 from pathlib import Path
 from typing import Optional, Protocol
 
 from app.config import MODEL_ID
 from app.schemas import ModelStatus, VideoAnswer
+
+logger = logging.getLogger("uvicorn.error")
 
 
 class VideoAnalyzer(Protocol):
@@ -52,6 +55,8 @@ class MolmoVideoEngine:
 
         self.loading = True
         self.last_error = None
+        started = time.perf_counter()
+        logger.info("molmo.load.start model_id=%s", self.model_id)
         try:
             from transformers import AutoModelForImageTextToText, AutoProcessor
 
@@ -67,8 +72,16 @@ class MolmoVideoEngine:
             )
             self.device = self._detect_device()
             self.dtype = str(getattr(self.model, "dtype", "auto"))
+            logger.info(
+                "molmo.load.complete model_id=%s device=%s dtype=%s elapsed_ms=%s",
+                self.model_id,
+                self.device,
+                self.dtype,
+                int((time.perf_counter() - started) * 1000),
+            )
         except Exception as exc:  # pragma: no cover - depends on local/GPU runtime.
             self.last_error = str(exc)
+            logger.exception("molmo.load.error model_id=%s message=%s", self.model_id, exc)
             raise
         finally:
             self.loading = False
@@ -93,6 +106,13 @@ class MolmoVideoEngine:
         max_new_tokens: int,
     ) -> VideoAnswer:
         started = time.perf_counter()
+        logger.info(
+            "molmo.answer.start video=%s max_fps=%s max_new_tokens=%s question=%r",
+            video_path,
+            max_fps,
+            max_new_tokens,
+            question,
+        )
         self._load()
 
         import torch
@@ -108,19 +128,23 @@ class MolmoVideoEngine:
         ]
 
         inputs = self._prepare_inputs(messages)
+        logger.info("molmo.answer.inputs_ready video=%s", video_path)
         model_device = self._model_device()
         inputs = {
             key: value.to(model_device) if hasattr(value, "to") else value
             for key, value in inputs.items()
         }
 
+        logger.info("molmo.answer.generate_start device=%s", model_device)
         with torch.inference_mode():
             generated_ids = self.model.generate(**inputs, max_new_tokens=max_new_tokens)
+        logger.info("molmo.answer.generate_complete")
 
         prompt_len = inputs["input_ids"].size(1)
         generated_tokens = generated_ids[0, prompt_len:]
         answer = self.processor.tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
         latency_ms = int((time.perf_counter() - started) * 1000)
+        logger.info("molmo.answer.complete latency_ms=%s answer=%r", latency_ms, answer[:1000])
         return VideoAnswer(
             answer=answer,
             model_id=self.model_id,
@@ -133,6 +157,7 @@ class MolmoVideoEngine:
         try:
             from molmo_utils import process_vision_info
 
+            logger.info("molmo.inputs.prepare_with_molmo_utils")
             _, videos, video_kwargs = process_vision_info(messages)
             videos, video_metadatas = zip(*videos)
             text = self.processor.apply_chat_template(
@@ -148,7 +173,8 @@ class MolmoVideoEngine:
                 return_tensors="pt",
                 **video_kwargs,
             )
-        except Exception:
+        except Exception as exc:
+            logger.warning("molmo.inputs.molmo_utils_failed fallback=apply_chat_template message=%s", exc)
             return self.processor.apply_chat_template(
                 messages,
                 tokenize=True,
@@ -164,4 +190,3 @@ class MolmoVideoEngine:
             return next(self.model.parameters()).device
         except Exception:
             return getattr(self.model, "device", "cpu")
-
